@@ -17,5 +17,5 @@ javac -cp lib/antlr-4.13.2-complete.jar main/*.java main/antlr/*.java
 
 ### Step3: Run Query
 ```bash
-java -cp lib/antlr-4.13.2-complete.jar:. main.Main test/j_caesar.xml test/queries/q1.txt test/output/q1_result.xml
+java -cp lib/antlr-4.13.2-complete.jar:. main.Main data/j_caesar.xml data/queries/q1.txt data/result/q1.xml
 ```
