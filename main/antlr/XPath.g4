@@ -1,6 +1,5 @@
 grammar XPath;
 
-/* Entry point */
 ap
     : 'doc' '(' fileName ')' '/' rp
     | 'doc' '(' fileName ')' '//' rp
@@ -10,9 +9,6 @@ fileName
     : StringConstant
     ;
 
-/* Relative path — precedence from lowest to highest:
-     comma (,) < slash (/ //) < filter ([]) < atom
-*/
 rp
     : rp ',' rp                         // rule 13
     | rp '/' rp                         // rule 10
@@ -27,9 +23,6 @@ rp
     | '(' rp ')'                        // rule 9
     ;
 
-/* Path filter — precedence from lowest to highest:
-     or < and < not < atom
-*/
 f
     : f 'or' f                          // rule 20: lowest precedence
     | f 'and' f                         // rule 19
