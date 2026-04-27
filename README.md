@@ -15,7 +15,7 @@ java -jar ../../lib/antlr-4.13.2-complete.jar -visitor -package main.antlr XPath
 javac -cp lib/antlr-4.13.2-complete.jar main/*.java main/antlr/*.java
 ```
 
-### Step3: Run query
+### Step3: Run Query
 ```bash
 java -cp lib/antlr-4.13.2-complete.jar:. main.Main test/j_caesar.xml test/queries/q1.txt test/output/q1_result.xml
 ```
