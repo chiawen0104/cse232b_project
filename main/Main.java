@@ -23,11 +23,11 @@ public class Main {
         XPathParser parser = new XPathParser(tokens);
         ParseTree apTree = parser.ap();
 
-        // Step 2: Read xml file and execute the XPath query
+        // Step 2: Read xml file and execute the XPath query evaluator
         String xmlFilePath = args[0];
         List<Node> results = XPathEvaluator.evalAP(apTree, xmlFilePath);
 
-        // Step 3: Build output XML document, wrapping results in <r>...</r>
+        // Step 3: Build output XML, wrapping results in <r>...</r>
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         DocumentBuilder builder = factory.newDocumentBuilder();
         Document outDoc = builder.newDocument();
@@ -40,7 +40,7 @@ public class Main {
             root.appendChild(imported);
         }
 
-        // Step 4: Write the output document to file
+        // Step 4: Write the output XML
         TransformerFactory tf = TransformerFactory.newInstance();
         Transformer transformer = tf.newTransformer();
         transformer.setOutputProperty(OutputKeys.INDENT, "yes");
