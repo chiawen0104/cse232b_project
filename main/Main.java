@@ -45,9 +45,13 @@ public class Main {
         Transformer transformer = tf.newTransformer();
         transformer.setOutputProperty(OutputKeys.INDENT, "yes");
         transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no");
+
+        File outputFile = new File(args[2]);
+        outputFile.getParentFile().mkdirs(); // create folder 
+
         transformer.transform(
             new DOMSource(outDoc),
-            new StreamResult(new File(args[2]))
+            new StreamResult(outputFile)
         );
     }
 }
