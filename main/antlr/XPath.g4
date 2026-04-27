@@ -36,11 +36,13 @@ f
     | '(' f ')'                         // rule 18
     ;
 
-/* Tokens */
+
+// String: "..." or '...'
 StringConstant : '"' (~["])* '"'
                | '\'' (~['])* '\''
                ;
 
 NAME : [a-zA-Z_] [A-Za-z0-9_\-]* ;
 
+// Skip all whitespace characters (space, tab, newline)
 WS : [ \t\r\n]+ -> skip ;
