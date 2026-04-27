@@ -8,7 +8,7 @@ import java.util.*;
 
 public class XPathEvaluator {
 
-    // evalAP — rule 1, 2
+    // evalAP: rule 1, 2
     public static List<Node> evalAP(ParseTree t, String xmlFilePath) throws Exception {
         String fileName = stripQuotes(t.getChild(2).getChild(0).getText());
 
@@ -35,7 +35,7 @@ public class XPathEvaluator {
         }
     }
 
-    // evalRP — rule 3~13
+    // evalRP: rule 3~13
     public static List<Node> evalRP(ParseTree t, Node n) {
         int count = t.getChildCount();
         
@@ -81,7 +81,6 @@ public class XPathEvaluator {
         // two children 
         if (count == 2) {
             // rule 8: [[@attName]]R(n)
-            // '@' ATTRNAME
             if (t.getChild(0).getText().equals("@")) {
                 String attrName = t.getChild(1).getText();
                 List<Node> res = new ArrayList<>();
@@ -100,7 +99,6 @@ public class XPathEvaluator {
             String c2 = t.getChild(2).getText();
 
             // rule 7: [[text()]]R(n)
-            // 'text' '(' ')'
             if (c0.equals("text") && c1.equals("(") && c2.equals(")")) {
                 List<Node> res = new ArrayList<>();
                 NodeList kids = n.getChildNodes();
@@ -115,7 +113,6 @@ public class XPathEvaluator {
             }
 
             // rule 9: [[(rp)]]R(n) = [[rp]]R(n)
-            // '(' rp ')'
             if (c0.equals("(") && c2.equals(")")) {
                 return evalRP(t.getChild(1), n);
             }
@@ -141,7 +138,6 @@ public class XPathEvaluator {
         // four children
         if (count == 4) {
             // rule 12: [[rp[f]]]R(n)
-            // rp '[' f ']'
             if (t.getChild(1).getText().equals("[")
                     && t.getChild(3).getText().equals("]")) {
                 List<Node> rpResults = evalRP(t.getChild(0), n);
@@ -197,7 +193,6 @@ public class XPathEvaluator {
             }
 
             // rule 17: [[rp = StringConstant]]F(n)
-            // exists x in [[rp]]R(n) such that x eq StringConstant
             if ((c1.equals("=") || c1.equals("eq")) && isStringConstant(c2)) {
                 String strVal = stripQuotes(c2);
                 List<Node> rpResults = evalRP(t.getChild(0), n);
@@ -208,7 +203,6 @@ public class XPathEvaluator {
             }
 
             // rule 15: [[rp1 = rp2]]F(n) / [[rp1 eq rp2]]F(n)
-            // exists x in [[rp1]]R(n), y in [[rp2]]R(n) such that x eq y (value equal)
             if (c1.equals("=") || c1.equals("eq")) {
                 List<Node> rp1Results = evalRP(t.getChild(0), n);
                 List<Node> rp2Results = evalRP(t.getChild(2), n);
@@ -221,7 +215,6 @@ public class XPathEvaluator {
             }
 
             // rule 16: [[rp1 == rp2]]F(n) / [[rp1 is rp2]]F(n)
-            // exists x in [[rp1]]R(n), y in [[rp2]]R(n) such that x is y (identity equal)
             if (c1.equals("==") || c1.equals("is")) {
                 List<Node> rp1Results = evalRP(t.getChild(0), n);
                 List<Node> rp2Results = evalRP(t.getChild(2), n);
@@ -238,7 +231,7 @@ public class XPathEvaluator {
     }
 
     
-    // Private Helpers
+    // private helpers
     private static List<Node> evalSlash(ParseTree rp1, ParseTree rp2, Node n) {
         List<Node> rp1Results = evalRP(rp1, n);
         List<Node> res = new ArrayList<>();
@@ -276,10 +269,6 @@ public class XPathEvaluator {
         return res;
     }
 
-    /**
-     * Used for doc(fn)//rp (rule 2): [[.//rp]]R(n)
-     * Apply rp to node n itself and all its descendants.
-     */
     private static List<Node> evalDoubleSlashFromNode(ParseTree rp, Node n) {
         List<Node> res = new ArrayList<>();
 
@@ -299,9 +288,7 @@ public class XPathEvaluator {
         return res;
     }
 
-    /**
-     * Collect all element descendants of node n in DFS order.
-     */
+    // Collect all element descendants of node n in DFS order.
     private static void collectDescendants(Node n, List<Node> result) {
         NodeList kids = n.getChildNodes();
         for (int i = 0; i < kids.getLength(); i++) {
@@ -313,9 +300,7 @@ public class XPathEvaluator {
         }
     }
 
-    /**
-     * Return all element children of node n.
-     */
+    // Return all element children of node n
     private static List<Node> getElementChildren(Node n) {
         List<Node> res = new ArrayList<>();
         NodeList kids = n.getChildNodes();
@@ -328,10 +313,7 @@ public class XPathEvaluator {
         return res;
     }
 
-    /**
-     * rule 15: value equality
-     * n eq m iff the trees rooted at n and m are isomorphic.
-     */
+    // rule 15: value equality
     private static boolean valueEqual(Node n, Node m) {
         if (n.getNodeType() != m.getNodeType()) return false;
 
@@ -362,9 +344,7 @@ public class XPathEvaluator {
         return false;
     }
 
-    /**
-     * Get the text value of a node (used for string comparisons).
-     */
+    // Get the text value of a node
     private static String getTextValue(Node n) {
         if (n.getNodeType() == Node.TEXT_NODE) {
             return n.getNodeValue();
@@ -375,17 +355,13 @@ public class XPathEvaluator {
         return n.getTextContent();
     }
 
-    /**
-     * Check whether a string is a string constant (surrounded by quotes).
-     */
+    // Check whether a string is a string constant
     private static boolean isStringConstant(String s) {
         return (s.startsWith("\"") && s.endsWith("\""))
                 || (s.startsWith("'") && s.endsWith("'"));
     }
 
-    /**
-     * Strip surrounding quotes from a string constant.
-     */
+    // Strip surrounding quotes from a string constant
     private static String stripQuotes(String s) {
         if (s.length() >= 2 && isStringConstant(s)) {
             return s.substring(1, s.length() - 1);
