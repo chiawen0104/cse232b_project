@@ -1,80 +1,53 @@
-grammar Exp;
+grammar XPath;
 
-/* This will be the entry point of our parser. */
-eval
-    :    additionExp
-    ;
-
-/* Addition and subtraction have the lowest precedence. */
-additionExp
-    :    multiplyExp 
-         ( '+' multiplyExp 
-         | '-' multiplyExp
-         )* 
-    ;
-
-/* Multiplication and division have a higher precedence. */
-multiplyExp
-    :    atomExp
-         ( '*' atomExp 
-         | '/' atomExp
-         )* 
-    ;
-
-/* An expression atom is the smallest part of an expression: a number. Or 
-   when we encounter parenthesis, we're making a recursive call back to the
-   rule 'additionExp'. As you can see, an 'atomExp' has the highest precedence. */
-atomExp
-    :    Number
-    |    '(' additionExp ')'
-    ;
-
-/* A number: can be an integer value, or a decimal value */
-Number
-    :    ('0'..'9')+ ('.' ('0'..'9')+)?
-    ;
-
-/* We're going to ignore all white space characters */
-WS  
-    :   (' ' | '\t' | '\r'| '\n') -> skip
-    ;
-
+/* Entry point */
 ap
     : 'doc' '(' fileName ')' '/' rp
     | 'doc' '(' fileName ')' '//' rp
     ;
-    
+
 fileName
-    : STRING
+    : StringConstant
     ;
-STRING : [/a-zA-Z_0-9]+ ;
 
+/* Relative path — precedence from lowest to highest:
+     comma (,) < slash (/ //) < filter ([]) < atom
+*/
 rp
-    : TAGNAME
-    | '*'
-    | '.'
-    | '..'
-    | 'text' '(' ')'
-    | '@' ATTRNAME
-    | '(' rp ')'
-    | rp '/' rp
-    | rp '//' rp
-    | rp '[' f ']'
-    | rp ',' rp
+    : rp ',' rp                         // rule 13
+    | rp '/' rp                         // rule 10
+    | rp '//' rp                        // rule 11
+    | rp '[' f ']'                      // rule 12
+    | NAME                              // rule 3
+    | '*'                               // rule 4
+    | '.'                               // rule 5
+    | '..'                              // rule 6
+    | 'text' '(' ')'                    // rule 7
+    | '@' NAME                          // rule 8
+    | '(' rp ')'                        // rule 9
     ;
 
+/* Path filter — precedence from lowest to highest:
+     or < and < not < atom
+*/
 f
-    : rp
-    | rp '=' rp
-    | rp 'eq' rp
-    | rp '==' rp
-    | rp 'is' rp
-    | rp '=' STRING
-    | '(' f ')'
-    | f 'and' f
-    | f 'or' f
-    | 'not' f
+    : f 'or' f                          // rule 20: lowest precedence
+    | f 'and' f                         // rule 19
+    | 'not' f                           // rule 21
+    | rp '=' StringConstant             // rule 17
+    | rp '=' rp                         // rule 15
+    | rp 'eq' rp                        // rule 15
+    | rp '==' rp                        // rule 16
+    | rp 'is' rp                        // rule 16
+    | rp                                // rule 14
+    | '(' f ')'                         // rule 18
     ;
 
-TAGNAME  : [a-zA-Z_] [A-Za-z0-9_]* ;
-ATTRNAME : [a-zA-Z_] [A-Za-z0-9_]* ;
+/* Tokens */
+StringConstant : '"' (~["])* '"'
+               | '\'' (~['])* '\''
+               ;
+
+NAME : [a-zA-Z_] [A-Za-z0-9_\-]* ;
+
+WS : [ \t\r\n]+ -> skip ;
