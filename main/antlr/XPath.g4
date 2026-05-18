@@ -1,4 +1,4 @@
-grammar Exp;
+grammar XPath;
 
 /* This will be the entry point of our parser. */
 eval
@@ -42,13 +42,16 @@ WS
 ap
     : 'doc' '(' fileName ')' '/' rp
     | 'doc' '(' fileName ')' '//' rp
+    | 'document' '(' fileName ')' '//' rp
+    | 'document' '(' fileName ')' '/' rp
     ;
     
 fileName
     : STRING
     ;
-STRING : [/a-zA-Z_0-9]+ ;
-
+STRING  : '"' (~["])* '"'
+        | '\'' (~['])* '\''
+        ; 
 rp
     : TAGNAME
     | '*'
@@ -78,3 +81,57 @@ f
 
 TAGNAME  : [a-zA-Z_] [A-Za-z0-9_]* ;
 ATTRNAME : [a-zA-Z_] [A-Za-z0-9_]* ;
+xq
+    : VAR
+    | STRING
+    | ap
+    | '(' xq ')'
+    | xq ',' xq
+    | xq '/' rp
+    | xq '//' rp
+    | LT TAGNAME GT LBRACE xq RBRACE LT SLASH TAGNAME GT
+    | forClause letClause? whereClause? returnClause
+    | letClause xq
+    ;
+content
+    : xq?
+    ;
+COMMA : ',';
+LT    : '<';
+GT    : '>';
+SLASH : '/';
+LBRACE : '{';
+RBRACE : '}';
+forClause
+    : 'for' varRepeat1 ( ',' varRepeat1 )*
+    ;
+varRepeat1
+    :  VAR 'in' xq
+    ;
+letClause
+    :  'let' varRepeat2 (',' varRepeat2)*
+    ;
+varRepeat2
+    : VAR ':=' xq
+    ;
+
+whereClause
+    : 'where' cond
+    ;
+returnClause
+    : 'return' xq
+    ;
+cond
+    : xq '=' xq
+    | xq 'eq' xq
+    | xq '==' xq
+    | xq 'is' xq
+    | 'empty' '(' xq ')'
+    | 'some' varRepeat1 (',' varRepeat1)* 'satisfies' cond
+    | '(' cond ')'
+    | cond 'and' cond
+    | cond 'or' cond
+    | 'not' cond
+    ;
+VAR : '$' [a-zA-Z_][a-zA-Z0-9_]* 
+    ;
