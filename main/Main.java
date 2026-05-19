@@ -19,14 +19,12 @@ public class Main {
         String xmlFilePath = args[0];
 
         // Step 1: Parse the query.
-        // One grammar (XPath.g4) covers both XPath and XQuery, so one parser handles both.
         CharStream input = CharStreams.fromFileName(args[1]);
         XPathLexer lexer = new XPathLexer(input);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         XPathParser parser = new XPathParser(tokens);
 
-        // Step 2: Evaluate - parse as xq (which includes ap as one of its alternatives,
-        // so this handles both Milestone 1 XPath and Milestone 2 XQuery).
+        // Step 2: Evaluate
         ParseTree tree = parser.xq();
 
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -35,10 +33,10 @@ public class Main {
         List<Node> results;
 
         if (tree.getChildCount() == 1 && tree.getChild(0) instanceof XPathParser.ApContext) {
-            // Milestone 1: pure XPath absolute path - delegate to XPathEvaluator
+            // Milestone 1: pure XPath absolute path
             results = XPathEvaluator.evaluateAP(tree.getChild(0), xmlFilePath);
         } else {
-            // Milestone 2: XQuery expression   delegate to XQueryEvaluator
+            // Milestone 2: XQuery expression
             Document scratchDoc = builder.newDocument();
             XQueryContext ctx = new XQueryContext();
             ctx.contextItem = null;
@@ -46,12 +44,20 @@ public class Main {
             results = XQueryEvaluator.evaluate(tree, ctx, scratchDoc, xmlFilePath);
         }
 
-        // Step 3: Wrap results in a <result> root element
+        // Step 3: Build output document directly from results (no extra wrapper).
+        // The query's outermost element construction IS the root.
         Document outDoc = builder.newDocument();
-        Element root = outDoc.createElement("result");
-        outDoc.appendChild(root);
-        for (Node n : results) {
-            root.appendChild(outDoc.importNode(n, true));
+
+        if (results.size() == 1 && results.get(0).getNodeType() == Node.ELEMENT_NODE) {
+            // Single element result — use it directly as document root
+            outDoc.appendChild(outDoc.importNode(results.get(0), true));
+        } else {
+            // Multiple results or non-element results — wrap in <result>
+            Element root = outDoc.createElement("result");
+            outDoc.appendChild(root);
+            for (Node n : results) {
+                root.appendChild(outDoc.importNode(n, true));
+            }
         }
 
         // Step 4: Write output XML
