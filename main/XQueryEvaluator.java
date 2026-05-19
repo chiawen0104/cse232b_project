@@ -1,13 +1,7 @@
 package main;
-import org.antlr.v4.runtime.ANTLRFileStream;
-import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 import main.antlr.XPathParser;
-
-import org.antlr.v4.runtime.tree.ParseTree;
 import org.w3c.dom.*;
-import javax.xml.parsers.*;
-import java.io.File;
 import java.util.*;
 
 class XQueryContext {
@@ -20,332 +14,321 @@ class XQueryContext {
         this.env = env;
     }
 }
+
 public class XQueryEvaluator {
+ 
     public static List<Node> evaluate(ParseTree t, XQueryContext ctx, Document doc, String xmlFilePath) throws Exception {
-    return evaluateXQ(t, ctx, doc, xmlFilePath);
+        return evaluateXQ(t, ctx, doc, xmlFilePath);
     }
+ 
+    // -----------------------------------------------------------------------
+    // Helper: collect all element descendants (same as XPathEvaluator's version)
+    // -----------------------------------------------------------------------
     static List<Node> recurrDescendant(Node node, List<Node> listOfNodes) {
-            NodeList kids = node.getChildNodes();
-            for(int i = 0; i < kids.getLength(); i++) {
-                Node c = kids.item(i);
-                if(c.getNodeType() == Node.ELEMENT_NODE) {
-                    listOfNodes.add(c);
-                    recurrDescendant(c, listOfNodes);
-                }
+        NodeList kids = node.getChildNodes();
+        for (int i = 0; i < kids.getLength(); i++) {
+            Node c = kids.item(i);
+            if (c.getNodeType() == Node.ELEMENT_NODE) {
+                listOfNodes.add(c);
+                recurrDescendant(c, listOfNodes);
             }
-            return listOfNodes;
+        }
+        return listOfNodes;
     }
-    private static Boolean evaluateSomeRecursive(List<ParseTree> bindings,int index,
-        XQueryContext context,ParseTree condClause,Document doc,String xmlFilePath) throws Exception {
-        if (index == bindings.size()) {
-            return evaluateCOND(condClause, context, doc, xmlFilePath);
+ 
+    // -----------------------------------------------------------------------
+    // Main XQ evaluator
+    // -----------------------------------------------------------------------
+    private static List<Node> evaluateXQ(ParseTree t, XQueryContext context, Document doc, String xmlFilePath) throws Exception {
+ 
+        // Guard: terminal node has no children → nothing to evaluate
+        if (t.getChildCount() == 0) return new ArrayList<>();
+ 
+        // ── 1-child cases ──────────────────────────────────────────────────
+        if (t.getChildCount() == 1) {
+            String text = t.getChild(0).getText();
+ 
+            // STRING literal  →  text node
+            if ((text.startsWith("\"") && text.endsWith("\""))
+             || (text.startsWith("'")  && text.endsWith("'"))) {
+                String s = text.substring(1, text.length() - 1);
+                return new ArrayList<>(List.of(doc.createTextNode(s)));
+            }
+ 
+            // ap  →  delegate to XPathEvaluator
+            if (t.getChild(0) instanceof XPathParser.ApContext) {
+                return XPathEvaluator.evaluateAP(t.getChild(0), xmlFilePath);
+            }
+ 
+            // VAR  →  look up in environment
+            if (context.env.containsKey(text)) {
+                return new ArrayList<>(context.env.get(text));
+            }
+            return new ArrayList<>();
         }
-        //varRepeat: VAR 'in' xq;
-        //bind the 
-        ParseTree binding = bindings.get(index);
-        String varName =binding.getChild(0).getText();
-        ParseTree xqExpr =binding.getChild(2);
-        List<Node> values =evaluateXQ(xqExpr,context,doc,xmlFilePath);
-        List<Node> results =new ArrayList<>();
-        //evaluate one node at a time
-        for (Node v : values) {
-            Map<String, List<Node>> newEnv = new HashMap<>(context.env);
-            // v already bound from for-each
-            //Ci = {Vari vi} Ci-1
-            newEnv.put(varName, List.of(v));
-            //we are only update the environment
-            XQueryContext next = new XQueryContext(context.contextItem,newEnv);
-            //move to the next for-variable with the updated context.
-            if (evaluateSomeRecursive(bindings,index + 1,next,condClause,doc,xmlFilePath)) {
-                return true;
-            }  
-        }
-        return false;
-    }
-    private static List<Node> evaluateForRecursive(List<ParseTree> bindings,int index,
-        XQueryContext context,ParseTree letClause,ParseTree whereClause,ParseTree returnClause,
-        Document doc,String xmlFilePath) throws Exception {
-        //it's the base case
-        //all for-variables have been assigned one node each
-        if (index == bindings.size()) {
-            XQueryContext current = context;
-            if (letClause != null) {
-                Map<String, List<Node>> newEnv=new HashMap<>();
-                newEnv=context.env;
-                XQueryContext focus =new XQueryContext(context.contextItem,newEnv);
-                for (int i = 1; i < letClause.getChildCount(); i++) {
-                    ParseTree child = letClause.getChild(i);
-                    // ignore commas
-                    if (",".equals(child.getText())) {
-                        continue;
-                    }
-                    if (child.getChildCount() >= 3) {
-                        String varName =child.getChild(0).getText();
-                        ParseTree xqExpr =child.getChild(2);
-                        //evaluate using PREVIOUS context Ci-1
-                        List<Node> value =evaluateXQ(xqExpr, focus, doc, xmlFilePath);
-                        //create Ci from Ci-1
-                        newEnv.put(varName, value);
-                    }
-                }
+ 
+        // ── 3-child cases ──────────────────────────────────────────────────
+        if (t.getChildCount() == 3) {
+ 
+            // BUG 1 FIX: ( xq )
+            if ("(".equals(t.getChild(0).getText()) && ")".equals(t.getChild(2).getText())) {
+                return evaluateXQ(t.getChild(1), context, doc, xmlFilePath);
             }
-            if (whereClause != null &&!evaluateCOND(whereClause.getChild(1),current,doc,xmlFilePath)) {
-                return new ArrayList<>();
-            }
-            return evaluateXQ(returnClause.getChild(1),current,doc,xmlFilePath);
-        }
-        //recursive case
-        else{
-            //varRepeat: VAR 'in' xq;
-            //bind the 
-            ParseTree binding = bindings.get(index);
-            String varName =binding.getChild(0).getText();
-            ParseTree xqExpr =binding.getChild(2);
-            List<Node> values =evaluateXQ(xqExpr,context,doc,xmlFilePath);
-            List<Node> results =new ArrayList<>();
-            //evaluate one node at a time
-            for (Node v : values) {
-                Map<String, List<Node>> newEnv = new HashMap<>(context.env);
-                // v already bound from for-each
-                //Ci = {Vari vi} Ci-1
-                newEnv.put(varName, List.of(v));
-                //we are only update the environment
-                XQueryContext next = new XQueryContext(context.contextItem,newEnv);
-                //move to the next for-variable with the updated context.
-                List<Node> partial =evaluateForRecursive(bindings,index + 1,next,letClause,whereClause,returnClause,doc,xmlFilePath);
-                results.addAll(partial);
-            }
-
-            return results;
-        }
-    }
-    private static List<Node> evaluateXQ(ParseTree t,XQueryContext context,Document doc,String xmlFilePath) throws Exception {
-        if(t.getChildCount()== 1){
-            //STRING
-            if((t.getChild(0).getText().startsWith("\"") && t.getChild(0).getText().endsWith("\"") || t.getChild(0).getText().startsWith("'") && t.getChild(0).getText().endsWith("'"))) {
-                String string =t.getChild(0).getText();
-                String s = string.substring(1, string.length() - 1);
-                Text textNode = doc.createTextNode(s);
-
-                return new ArrayList<>(List.of(textNode));
-            }
-            //ap
-            else if(t.getChild(0) instanceof XPathParser.ApContext) {
-                List<Node> rpResults=XPathEvaluator.evaluateAP(t.getChild(0), xmlFilePath);
-                return rpResults;
-            }
-            //VAR
-            else{
-                String var = t.getChild(0).getText();
-                List<Node> value = context.env.get(var);
-                if (context.env.containsKey(var)) {
-                    return new ArrayList<>(context.env.get(var));
-                }
-                else{
-                    return new ArrayList<>();
-
-                }
-                // List<Node> nodes = new ArrayList<>();
-                // NodeList kids = context.getChildNodes();
-                // for (int i=0; i<kids.getLength();i++) {
-                //     Node c=kids.item(i);
-                //     if (c.getNodeType()== Node.ELEMENT_NODE &&((Element)c).getName().equals(var)) {
-                //         nodes.add(c);
-                //     }
-                // }
-                // return nodes;
-            }
-        }
-        else if(t.getChildCount()==3){
-            //(xq)
-            if ("(".equals(t.getChild(0).getText()) && ")".equals(t.getChild(0).getText())){
-                return evaluateXQ(t.getChild(1),context,doc,xmlFilePath);
-            }
-            //xq ',' xq
+ 
+            // xq , xq
             if (",".equals(t.getChild(1).getText())) {
-                List<Node> combinedResults= new ArrayList<>();
-                //evaluateXQ returns List<Node>
-                combinedResults.addAll(evaluateXQ(t.getChild(0),context,doc,xmlFilePath));
-                combinedResults.addAll(evaluateXQ(t.getChild(2),context,doc,xmlFilePath));
-                return combinedResults;
+                List<Node> result = new ArrayList<>();
+                result.addAll(evaluateXQ(t.getChild(0), context, doc, xmlFilePath));
+                result.addAll(evaluateXQ(t.getChild(2), context, doc, xmlFilePath));
+                return result;
             }
-            //xq '/' rp
+ 
+            // xq / rp
             if ("/".equals(t.getChild(1).getText())) {
-                List<Node> xqResults = evaluateXQ(t.getChild(0),context, doc, xmlFilePath);
+                List<Node> xqResults = evaluateXQ(t.getChild(0), context, doc, xmlFilePath);
                 List<Node> result = new ArrayList<>();
                 for (Node n : xqResults) {
-                    List<Node> rpResults = XPathEvaluator.evaluateRP(t.getChild(2), n);
-                    for (Node rp2Result : rpResults) {
-                        if(!result.contains(rp2Result)) {
-                            result.add(rp2Result);
+                    for (Node r : XPathEvaluator.evaluateRP(t.getChild(2), n)) {
+                        if (!result.contains(r)) result.add(r);
+                    }
+                }
+                return result;
+            }
+ 
+            // xq // rp
+            if ("//".equals(t.getChild(1).getText())) {
+                List<Node> xqResults = evaluateXQ(t.getChild(0), context, doc, xmlFilePath);
+                List<Node> result = new ArrayList<>();
+                for (Node n : xqResults) {
+                    // self level
+                    for (Node r : XPathEvaluator.evaluateRP(t.getChild(2), n)) {
+                        if (!result.contains(r)) result.add(r);
+                    }
+                    // descendants
+                    List<Node> desc = recurrDescendant(n, new ArrayList<>());
+                    for (Node d : desc) {
+                        for (Node r : XPathEvaluator.evaluateRP(t.getChild(2), d)) {
+                            if (!result.contains(r)) result.add(r);
                         }
                     }
                 }
                 return result;
             }
-            //xq '//' rp
-            if ("//".equals(t.getChild(1).getText())) {
-                List<Node> Finalresults=new ArrayList<>();
-                List<Node> xqResults = evaluateXQ(t.getChild(0),context, doc, xmlFilePath);
-                List<Node> result1 = new ArrayList<>();
-                for (Node n : xqResults) {
-                    List<Node> rpResults = XPathEvaluator.evaluateRP(t.getChild(2), n);
-                    for(Node rp2Result : rpResults) {
-                        if(!result1.contains(rp2Result)) {
-                            result1.add(rp2Result);
-                        }
-                    }
-                }
-                //the second path is that we go to the descendant of every node in rp1 results and then evaluate rp2 with the descendant
-                List<Node> xqResults2 = evaluateXQ(t.getChild(0),context,doc,xmlFilePath);
-                List<Node> result2 = new ArrayList<>();
-                for(Node n :xqResults2) {
-                    List<Node> listOfNodes = new ArrayList<>();
-                    listOfNodes = recurrDescendant(n, listOfNodes);
-                    for(Node node : listOfNodes) {
-                        List<Node> rp3Results = XPathEvaluator.evaluateRP(t.getChild(2),node);
-                        for(Node rp3Result : rp3Results) {
-                            if(!result2.contains(rp3Result)) {
-                                result2.add(rp3Result);
-                            }
-                        }
-                    }  
-                }
-                Finalresults.addAll(result1);
-                for(Node uniqueResult : result2) {
-                    if(!Finalresults.contains(uniqueResult)) {
-                        Finalresults.add(uniqueResult);
-                    }
-                }
-                return Finalresults;
-            }
         }
-        else{
-            // '(' TAGNAME ')' '{' xq '}' '(' '/' TAGNAME ')'
-           if ("(".equals(t.getChild(0).getText())&& ")".equals(t.getChild(2).getText()) && "{".equals(t.getChild(3).getText()) && "}".equals(t.getChild(5).getText())) {
-                String tagname=t.getChild(1).getText();
-                Element newElem =doc.createElement(tagname);
-                List<Node> xqResults = evaluateXQ(t.getChild(4),context,doc,xmlFilePath);
-                for (Node child :xqResults) {
-                    newElem.appendChild(doc.importNode(child, true));
-                }
-                return List.of(newElem);
+ 
+        // ── Element construction: < TAGNAME > { xq } </ TAGNAME >  (10 children) ──
+        // BUG 2 FIX: match on '<' and '>' tokens, not '(' and ')'
+        if (t.getChildCount() == 10
+                && "<".equals(t.getChild(0).getText())
+                && ">".equals(t.getChild(2).getText())
+                && "{".equals(t.getChild(3).getText())
+                && "}".equals(t.getChild(5).getText())) {
+            String tagName = t.getChild(1).getText();
+            Element newElem = doc.createElement(tagName);
+            for (Node child : evaluateXQ(t.getChild(4), context, doc, xmlFilePath)) {
+                newElem.appendChild(doc.importNode(child, true));
             }
-            // forClause letClause? whereClause? returnClause
-            if(t.getChild(0) instanceof XPathParser.ForClauseContext) {
-                ParseTree forClause = t.getChild(0);
-                ParseTree letClause=null;
-                ParseTree whereClause=null;
-                ParseTree returnClause=null;
-                for (int i = 1; i< t.getChildCount(); i++) {
-
-                    if (t.getChild(i) instanceof XPathParser.LetClauseContext){
-                        letClause =t.getChild(i);
-                    }
-                    else if(t.getChild(i) instanceof XPathParser.WhereClauseContext){
-                        whereClause=t.getChild(i);
-                    }
-                    else if (t.getChild(i) instanceof XPathParser.ReturnClauseContext){
-                        returnClause=t.getChild(i);
-                    }
-                }
-                List<Node> results = new ArrayList<>();
-                List<ParseTree> bindings =new ArrayList<>();
-                //collecting the for clause
-                for (int i = 1;i < forClause.getChildCount();i++) {
-                    ParseTree child =forClause.getChild(i);
-                    if (!",".equals(child.getText())) {
-                        bindings.add(child);
-                    }
-                }
-                return evaluateForRecursive(bindings,0,context,letClause,whereClause,returnClause,doc,xmlFilePath);
+            return List.of(newElem);
+        }
+ 
+        // ── FLWOR: forClause letClause? whereClause? returnClause ──────────
+        if (t.getChild(0) instanceof XPathParser.ForClauseContext) {
+            ParseTree forClause    = t.getChild(0);
+            ParseTree letClause    = null;
+            ParseTree whereClause  = null;
+            ParseTree returnClause = null;
+ 
+            for (int i = 1; i < t.getChildCount(); i++) {
+                ParseTree child = t.getChild(i);
+                if (child instanceof XPathParser.LetClauseContext)    letClause    = child;
+                else if (child instanceof XPathParser.WhereClauseContext) whereClause  = child;
+                else if (child instanceof XPathParser.ReturnClauseContext) returnClause = child;
             }
-            //letClause xq
-            if(t.getChild(0) instanceof XPathParser.LetClauseContext){
-                ParseTree letClause = t.getChild(0);
+ 
+            // Collect for-bindings (skip commas)
+            List<ParseTree> bindings = new ArrayList<>();
+            for (int i = 1; i < forClause.getChildCount(); i++) {
+                ParseTree child = forClause.getChild(i);
+                if (!",".equals(child.getText())) bindings.add(child);
+            }
+ 
+            return evaluateForRecursive(bindings, 0, context, letClause, whereClause, returnClause, doc, xmlFilePath);
+        }
+ 
+        // ── letClause xq ────────────────────────────────────────────────────
+        if (t.getChild(0) instanceof XPathParser.LetClauseContext) {
+            ParseTree letClause = t.getChild(0);
+            // BUG 3 FIX: copy env instead of aliasing it
+            Map<String, List<Node>> newEnv = new HashMap<>(context.env);
+            XQueryContext current = new XQueryContext(context.contextItem, newEnv);
+ 
+            for (int i = 1; i < letClause.getChildCount(); i++) {
+                ParseTree child = letClause.getChild(i);
+                if (",".equals(child.getText())) continue;
+                if (child.getChildCount() >= 3) {
+                    String varName = child.getChild(0).getText();
+                    List<Node> value = evaluateXQ(child.getChild(2), current, doc, xmlFilePath);
+                    newEnv.put(varName, value);
+                }
+            }
+            return evaluateXQ(t.getChild(1), current, doc, xmlFilePath);
+        }
+ 
+        return new ArrayList<>();
+    }
+ 
+    // -----------------------------------------------------------------------
+    // FLWOR recursive helper
+    // -----------------------------------------------------------------------
+    private static List<Node> evaluateForRecursive(
+            List<ParseTree> bindings, int index,
+            XQueryContext context,
+            ParseTree letClause, ParseTree whereClause, ParseTree returnClause,
+            Document doc, String xmlFilePath) throws Exception {
+ 
+        // Base case: all for-variables assigned
+        if (index == bindings.size()) {
+            XQueryContext current = context;
+ 
+            // Apply let-bindings (if any)
+            if (letClause != null) {
+                // BUG 3 FIX: proper copy, not alias
                 Map<String, List<Node>> newEnv = new HashMap<>(context.env);
-                XQueryContext current = new XQueryContext(context.contextItem, newEnv);
-                // letClause: 'let' varRepeat2 (',' varRepeat2)*
+                XQueryContext focus = new XQueryContext(context.contextItem, newEnv);
                 for (int i = 1; i < letClause.getChildCount(); i++) {
                     ParseTree child = letClause.getChild(i);
                     if (",".equals(child.getText())) continue;
                     if (child.getChildCount() >= 3) {
                         String varName = child.getChild(0).getText();
-                        ParseTree xqExpr = child.getChild(2);
-                        List<Node> value = evaluateXQ(xqExpr, current, doc, xmlFilePath);
+                        List<Node> value = evaluateXQ(child.getChild(2), focus, doc, xmlFilePath);
                         newEnv.put(varName, value);
                     }
                 }
-                return evaluateXQ(t.getChild(1), current, doc, xmlFilePath);
+                current = focus;
             }
+ 
+            // Apply where-filter (if any)
+            if (whereClause != null && !evaluateCOND(whereClause.getChild(1), current, doc, xmlFilePath)) {
+                return new ArrayList<>();
+            }
+ 
+            // Evaluate return
+            return evaluateXQ(returnClause.getChild(1), current, doc, xmlFilePath);
         }
-        return new ArrayList<>();
+ 
+        // Recursive case: bind next for-variable
+        ParseTree binding = bindings.get(index);
+        String varName = binding.getChild(0).getText();   // VAR
+        ParseTree xqExpr = binding.getChild(2);           // xq  (skip 'in' at index 1)
+ 
+        List<Node> values = evaluateXQ(xqExpr, context, doc, xmlFilePath);
+        List<Node> results = new ArrayList<>();
+ 
+        for (Node v : values) {
+            Map<String, List<Node>> newEnv = new HashMap<>(context.env);
+            newEnv.put(varName, List.of(v));
+            XQueryContext next = new XQueryContext(context.contextItem, newEnv);
+            results.addAll(evaluateForRecursive(bindings, index + 1, next,
+                    letClause, whereClause, returnClause, doc, xmlFilePath));
+        }
+        return results;
     }
-    private static Boolean evaluateCOND(ParseTree t,XQueryContext context,Document doc,String xmlFilePath) throws Exception {
-        if (t.getChildCount()==3){
-            if("=".equals(t.getChild(1).getText()) || "eq".equals(t.getChild(1).getText())){
-                List<Node> results1 =evaluateXQ(t.getChild(0), context, doc, xmlFilePath);
-                List<Node> results2 =evaluateXQ(t.getChild(2), context, doc, xmlFilePath);
-                for (Node xqResult1 : results1) {
-                    for (Node xqResult2 : results2){
-                        if (xqResult1.getTextContent().equals(xqResult2.getTextContent())) {
-                            return true;
-                        }
-                    }
-                }
-                return false;
-
-            }
-            else if("==".equals(t.getChild(1).getText()) || "is".equals(t.getChild(1).getText())){
-                List<Node> results1 =evaluateXQ(t.getChild(0), context, doc, xmlFilePath);
-                List<Node> results2 =evaluateXQ(t.getChild(2), context, doc, xmlFilePath);
-                for (Node xqResult1 : results1) {
-                    for (Node xqResult2 : results2){
-                        if (xqResult1.isSameNode(xqResult2)) {
-                            return true;
-                        }
-                    }
-                }
+ 
+    // -----------------------------------------------------------------------
+    // Condition evaluator
+    // -----------------------------------------------------------------------
+    private static boolean evaluateCOND(ParseTree t, XQueryContext context, Document doc, String xmlFilePath) throws Exception {
+ 
+        if (t.getChildCount() == 3) {
+            String op = t.getChild(1).getText();
+ 
+            // value equality
+            if ("=".equals(op) || "eq".equals(op)) {
+                List<Node> l = evaluateXQ(t.getChild(0), context, doc, xmlFilePath);
+                List<Node> r = evaluateXQ(t.getChild(2), context, doc, xmlFilePath);
+                for (Node n1 : l)
+                    for (Node n2 : r)
+                        if (n1.getTextContent().equals(n2.getTextContent())) return true;
                 return false;
             }
-            else if("(".equals(t.getChild(0).getText()) && ")".equals(t.getChild(2).getText())){
-                return  evaluateCOND(t.getChild(1),context,doc,xmlFilePath);
-
+ 
+            // identity equality
+            if ("==".equals(op) || "is".equals(op)) {
+                List<Node> l = evaluateXQ(t.getChild(0), context, doc, xmlFilePath);
+                List<Node> r = evaluateXQ(t.getChild(2), context, doc, xmlFilePath);
+                for (Node n1 : l)
+                    for (Node n2 : r)
+                        if (n1.isSameNode(n2)) return true;
+                return false;
             }
-            else if("and".equals(t.getChild(1).getText())){
-                return evaluateCOND(t.getChild(0),context,doc,xmlFilePath) && evaluateCOND(t.getChild(2),context,doc,xmlFilePath);
-
+ 
+            // ( cond )
+            if ("(".equals(t.getChild(0).getText()) && ")".equals(t.getChild(2).getText())) {
+                return evaluateCOND(t.getChild(1), context, doc, xmlFilePath);
             }
-            else if("or".equals(t.getChild(1).getText())){
-                return evaluateCOND(t.getChild(0),context,doc,xmlFilePath) || evaluateCOND(t.getChild(2),context,doc,xmlFilePath);
+ 
+            // cond and cond
+            if ("and".equals(op)) {
+                return evaluateCOND(t.getChild(0), context, doc, xmlFilePath)
+                    && evaluateCOND(t.getChild(2), context, doc, xmlFilePath);
+            }
+ 
+            // cond or cond
+            if ("or".equals(op)) {
+                return evaluateCOND(t.getChild(0), context, doc, xmlFilePath)
+                    || evaluateCOND(t.getChild(2), context, doc, xmlFilePath);
             }
         }
-        else if(t.getChildCount()==2){
-            return !evaluateCOND(t.getChild(1),context,doc,xmlFilePath);
+ 
+        // not cond  (2 children)
+        if (t.getChildCount() == 2 && "not".equals(t.getChild(0).getText())) {
+            return !evaluateCOND(t.getChild(1), context, doc, xmlFilePath);
         }
-        else{
-            if("empty".equals(t.getChild(0).getText())){
-                List<Node> results =evaluateXQ(t.getChild(2), context, doc, xmlFilePath);
-                return results.isEmpty();
-
+ 
+        // empty( xq )  and  some … satisfies …
+        if (t.getChildCount() >= 4) {
+            if ("empty".equals(t.getChild(0).getText())) {
+                return evaluateXQ(t.getChild(2), context, doc, xmlFilePath).isEmpty();
             }
-            else if("some".equals(t.getChild(0).getText())){
-                //ParseTree someClause = t.getChild(1);
+ 
+            if ("some".equals(t.getChild(0).getText())) {
                 List<ParseTree> bindings = new ArrayList<>();
                 int i = 1;
-                // collect all varRepeat1
                 while (!"satisfies".equals(t.getChild(i).getText())) {
-                    if (!",".equals(t.getChild(i).getText())){
-                        bindings.add(t.getChild(i));
-                    }
+                    if (!",".equals(t.getChild(i).getText())) bindings.add(t.getChild(i));
                     i++;
                 }
-
-                // cond after satisfies
                 ParseTree condClause = t.getChild(i + 1);
-                return evaluateSomeRecursive(bindings,0,context,condClause,doc,xmlFilePath);
-
+                return evaluateSomeRecursive(bindings, 0, context, condClause, doc, xmlFilePath);
             }
+        }
+ 
+        return false;
+    }
+ 
+    // -----------------------------------------------------------------------
+    // 'some' recursive helper
+    // -----------------------------------------------------------------------
+    private static boolean evaluateSomeRecursive(
+            List<ParseTree> bindings, int index,
+            XQueryContext context,
+            ParseTree condClause,
+            Document doc, String xmlFilePath) throws Exception {
+ 
+        if (index == bindings.size()) {
+            return evaluateCOND(condClause, context, doc, xmlFilePath);
+        }
+ 
+        ParseTree binding = bindings.get(index);
+        String varName = binding.getChild(0).getText();
+        ParseTree xqExpr = binding.getChild(2);
+ 
+        for (Node v : evaluateXQ(xqExpr, context, doc, xmlFilePath)) {
+            Map<String, List<Node>> newEnv = new HashMap<>(context.env);
+            newEnv.put(varName, List.of(v));
+            XQueryContext next = new XQueryContext(context.contextItem, newEnv);
+            if (evaluateSomeRecursive(bindings, index + 1, next, condClause, doc, xmlFilePath))
+                return true;
         }
         return false;
     }
