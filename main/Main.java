@@ -46,9 +46,9 @@ public class Main {
             results = XQueryEvaluator.evaluate(tree, ctx, scratchDoc, xmlFilePath);
         }
 
-        // Step 3: Wrap results in a <RESULT> root element
+        // Step 3: Wrap results in a <result> root element
         Document outDoc = builder.newDocument();
-        Element root = outDoc.createElement("RESULT");
+        Element root = outDoc.createElement("result");
         outDoc.appendChild(root);
         for (Node n : results) {
             root.appendChild(outDoc.importNode(n, true));
