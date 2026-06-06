@@ -27,7 +27,8 @@ public class XPathEvaluator {
         return listOfNodes;
     }
     public static List<Node> evaluateAP(ParseTree t, String xmlFilePath) throws Exception {
-        String filename =t.getChild(2).getChild(0).getText().substring(1, t.getChild(2).getChild(0).getText().length() - 1);
+        // There is only ever one input document: the file passed on the command
+        // line (args[0]). doc("input"), doc("j_caesar.xml"), etc. all refer to it.
         File file = new File(xmlFilePath);
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         DocumentBuilder builder = factory.newDocumentBuilder();
@@ -37,18 +38,31 @@ public class XPathEvaluator {
         //the rp
         ParseTree rpTree = t.getChild(5);
         if(sep.equals("/")) {
+          // Standard XPath: rp starts at the document node, so /data selects the
+          // root element <data>. Evaluating from the Document node makes the root
+          // a "child".
+          List<Node> apRes = evaluateRP(rpTree, doc);
+          // Legacy fallback: some queries name a child of the root directly (e.g.
+          // /book when the root is <inventory>). If the standard interpretation
+          // matched nothing, retry against the root element's children.
+          if (apRes.isEmpty()) {
+              apRes = evaluateRP(rpTree, root);
+          }
           //evaluate the rp tree with a single slash
-          return evaluateRP(rpTree,root);
+          return apRes;
         } else {
           //evaluate the rp tree with a double slash
             List<Node> results = new ArrayList<>();
-            List<Node> rpResults1 = evaluateRP(rpTree, root);
+            // Include the document node so the root element is reachable as the
+            // first step (e.g. //data or /data when <data> is the root).
+            List<Node> rpResults1 = evaluateRP(rpTree, doc);
             for(Node rpResult : rpResults1) {
               if(!results.contains(rpResult)) {
                 results.add(rpResult);
               }
             }
             List<Node> descendants = new ArrayList<>();
+            descendants.add(root);   // root is a descendant of the document node
             descendants= recurrDescendant(root, descendants);
             for(Node descendant : descendants) {
               List<Node> rpResults2 = evaluateRP(rpTree, descendant);
@@ -85,10 +99,22 @@ public class XPathEvaluator {
             else{
               return List.of(context.getParentNode());
             }
-          }             
+          }
+          // 'text()' is a single token, so it lands in the childCount==1 branch.
+          // Select the text-node children of the context (matches text node logic below).
+          else if ("text()".equals(t.getChild(0).getText()) || "text".equals(t.getChild(0).getText())) {
+            List<Node> textNodes = new ArrayList<>();
+            NodeList kids = context.getChildNodes();
+            for (int i = 0; i < kids.getLength(); i++) {
+                if (kids.item(i).getNodeType() == Node.TEXT_NODE) {
+                    textNodes.add(kids.item(i));
+                }
+            }
+            return textNodes;
+          }
           //getTagName() / getAttribute() can only be called on the Element node
           else{
-            String tag = t.getChild(0).getText(); 
+            String tag = t.getChild(0).getText();
             List<Node> nodes = new ArrayList<>();
             NodeList kids = context.getChildNodes();
             for (int i = 0; i < kids.getLength(); i++) {
@@ -101,7 +127,7 @@ public class XPathEvaluator {
           }
         }
         else{
-          if ("text".equals(t.getChild(0).getText())) {
+          if ("text()".equals(t.getChild(0).getText()) || "text".equals(t.getChild(0).getText())) {
             String s = context.getTextContent();
             if (s==null){
               return new ArrayList<Node>();

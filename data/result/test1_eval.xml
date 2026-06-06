@@ -1,0 +1,813 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<result>
+    <triplet>
+        <book id="b1">
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Smith</last>
+                    
+            </author>
+                
+            <author>
+                      
+                <first>Jane</first>
+                      
+                <last>Doe</last>
+                    
+            </author>
+              
+        </book>
+    </triplet>
+    <triplet>
+        <book id="b1">
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Smith</last>
+                    
+            </author>
+                
+            <author>
+                      
+                <first>Jane</first>
+                      
+                <last>Doe</last>
+                    
+            </author>
+              
+        </book>
+    </triplet>
+    <triplet>
+        <book id="b1">
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Smith</last>
+                    
+            </author>
+                
+            <author>
+                      
+                <first>Jane</first>
+                      
+                <last>Doe</last>
+                    
+            </author>
+              
+        </book>
+    </triplet>
+    <triplet>
+        <book id="b1">
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Smith</last>
+                    
+            </author>
+                
+            <author>
+                      
+                <first>Jane</first>
+                      
+                <last>Doe</last>
+                    
+            </author>
+              
+        </book>
+    </triplet>
+    <triplet>
+        <book id="b1">
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Smith</last>
+                    
+            </author>
+                
+            <author>
+                      
+                <first>Jane</first>
+                      
+                <last>Doe</last>
+                    
+            </author>
+              
+        </book>
+    </triplet>
+    <triplet>
+        <book id="b1">
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Smith</last>
+                    
+            </author>
+                
+            <author>
+                      
+                <first>Jane</first>
+                      
+                <last>Doe</last>
+                    
+            </author>
+              
+        </book>
+    </triplet>
+    <triplet>
+        <book id="b1">
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Smith</last>
+                    
+            </author>
+                
+            <author>
+                      
+                <first>Jane</first>
+                      
+                <last>Doe</last>
+                    
+            </author>
+              
+        </book>
+    </triplet>
+    <triplet>
+        <book id="b1">
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Smith</last>
+                    
+            </author>
+                
+            <author>
+                      
+                <first>Jane</first>
+                      
+                <last>Doe</last>
+                    
+            </author>
+              
+        </book>
+    </triplet>
+    <triplet>
+        <book id="b1">
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Smith</last>
+                    
+            </author>
+                
+            <author>
+                      
+                <first>Jane</first>
+                      
+                <last>Doe</last>
+                    
+            </author>
+              
+        </book>
+    </triplet>
+    <triplet>
+        <book id="b1">
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Smith</last>
+                    
+            </author>
+                
+            <author>
+                      
+                <first>Jane</first>
+                      
+                <last>Doe</last>
+                    
+            </author>
+              
+        </book>
+    </triplet>
+    <triplet>
+        <book id="b1">
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Smith</last>
+                    
+            </author>
+                
+            <author>
+                      
+                <first>Jane</first>
+                      
+                <last>Doe</last>
+                    
+            </author>
+              
+        </book>
+    </triplet>
+    <triplet>
+        <book id="b1">
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Smith</last>
+                    
+            </author>
+                
+            <author>
+                      
+                <first>Jane</first>
+                      
+                <last>Doe</last>
+                    
+            </author>
+              
+        </book>
+    </triplet>
+    <triplet>
+        <book id="b1">
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Smith</last>
+                    
+            </author>
+                
+            <author>
+                      
+                <first>Jane</first>
+                      
+                <last>Doe</last>
+                    
+            </author>
+              
+        </book>
+    </triplet>
+    <triplet>
+        <book id="b1">
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Smith</last>
+                    
+            </author>
+                
+            <author>
+                      
+                <first>Jane</first>
+                      
+                <last>Doe</last>
+                    
+            </author>
+              
+        </book>
+    </triplet>
+    <triplet>
+        <book id="b2">
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Smith</last>
+                    
+            </author>
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Jones</last>
+                    
+            </author>
+              
+        </book>
+    </triplet>
+    <triplet>
+        <book id="b2">
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Smith</last>
+                    
+            </author>
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Jones</last>
+                    
+            </author>
+              
+        </book>
+    </triplet>
+    <triplet>
+        <book id="b2">
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Smith</last>
+                    
+            </author>
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Jones</last>
+                    
+            </author>
+              
+        </book>
+    </triplet>
+    <triplet>
+        <book id="b2">
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Smith</last>
+                    
+            </author>
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Jones</last>
+                    
+            </author>
+              
+        </book>
+    </triplet>
+    <triplet>
+        <book id="b2">
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Smith</last>
+                    
+            </author>
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Jones</last>
+                    
+            </author>
+              
+        </book>
+    </triplet>
+    <triplet>
+        <book id="b2">
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Smith</last>
+                    
+            </author>
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Jones</last>
+                    
+            </author>
+              
+        </book>
+    </triplet>
+    <triplet>
+        <book id="b2">
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Smith</last>
+                    
+            </author>
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Jones</last>
+                    
+            </author>
+              
+        </book>
+    </triplet>
+    <triplet>
+        <book id="b2">
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Smith</last>
+                    
+            </author>
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Jones</last>
+                    
+            </author>
+              
+        </book>
+    </triplet>
+    <triplet>
+        <book id="b2">
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Smith</last>
+                    
+            </author>
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Jones</last>
+                    
+            </author>
+              
+        </book>
+    </triplet>
+    <triplet>
+        <book id="b2">
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Smith</last>
+                    
+            </author>
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Jones</last>
+                    
+            </author>
+              
+        </book>
+    </triplet>
+    <triplet>
+        <book id="b2">
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Smith</last>
+                    
+            </author>
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Jones</last>
+                    
+            </author>
+              
+        </book>
+    </triplet>
+    <triplet>
+        <book id="b2">
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Smith</last>
+                    
+            </author>
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Jones</last>
+                    
+            </author>
+              
+        </book>
+    </triplet>
+    <triplet>
+        <book id="b2">
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Smith</last>
+                    
+            </author>
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Jones</last>
+                    
+            </author>
+              
+        </book>
+    </triplet>
+    <triplet>
+        <book id="b2">
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Smith</last>
+                    
+            </author>
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Jones</last>
+                    
+            </author>
+              
+        </book>
+    </triplet>
+    <triplet>
+        <book id="b2">
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Smith</last>
+                    
+            </author>
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Jones</last>
+                    
+            </author>
+              
+        </book>
+    </triplet>
+    <triplet>
+        <book id="b2">
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Smith</last>
+                    
+            </author>
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Jones</last>
+                    
+            </author>
+              
+        </book>
+    </triplet>
+    <triplet>
+        <book id="b2">
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Smith</last>
+                    
+            </author>
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Jones</last>
+                    
+            </author>
+              
+        </book>
+    </triplet>
+    <triplet>
+        <book id="b2">
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Smith</last>
+                    
+            </author>
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Jones</last>
+                    
+            </author>
+              
+        </book>
+    </triplet>
+    <triplet>
+        <book id="b2">
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Smith</last>
+                    
+            </author>
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Jones</last>
+                    
+            </author>
+              
+        </book>
+    </triplet>
+    <triplet>
+        <book id="b3">
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Jones</last>
+                    
+            </author>
+              
+        </book>
+    </triplet>
+    <triplet>
+        <book id="b3">
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Jones</last>
+                    
+            </author>
+              
+        </book>
+    </triplet>
+    <triplet>
+        <book id="b3">
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Jones</last>
+                    
+            </author>
+              
+        </book>
+    </triplet>
+    <triplet>
+        <book id="b3">
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Jones</last>
+                    
+            </author>
+              
+        </book>
+    </triplet>
+    <triplet>
+        <book id="b3">
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Jones</last>
+                    
+            </author>
+              
+        </book>
+    </triplet>
+    <triplet>
+        <book id="b3">
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Jones</last>
+                    
+            </author>
+              
+        </book>
+    </triplet>
+    <triplet>
+        <book id="b3">
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Jones</last>
+                    
+            </author>
+              
+        </book>
+    </triplet>
+    <triplet>
+        <book id="b3">
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Jones</last>
+                    
+            </author>
+              
+        </book>
+    </triplet>
+    <triplet>
+        <book id="b3">
+                
+            <author>
+                      
+                <first>John</first>
+                      
+                <last>Jones</last>
+                    
+            </author>
+              
+        </book>
+    </triplet>
+</result>

@@ -1,0 +1,26 @@
+<catalog>
+  <book>
+    <title>Database Systems</title>
+    <author><first>John</first><last>Smith</last></author>
+    <price>50</price>
+  </book>
+  <book>
+    <title>XML Processing</title>
+    <author><first>John</first><last>Smith</last></author>
+    <author><first>Jane</first><last>Doe</last></author>
+    <price>40</price>
+  </book>
+  <book>
+    <title>Query Languages</title>
+    <author><first>Jane</first><last>Doe</last></author>
+    <price>30</price>
+  </book>
+  <entry>
+    <title>Database Systems</title>
+    <price>45</price>
+  </entry>
+  <entry>
+    <title>Query Languages</title>
+    <price>28</price>
+  </entry>
+</catalog>

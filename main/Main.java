@@ -12,47 +12,87 @@ import java.util.*;
 
 public class Main {
     public static void main(String[] args) throws Exception {
-        // args[0] = path to XML file
-        // args[1] = path to query file
-        // args[2] = path to output file
+        if (args.length != 3 && args.length != 4) {
+            System.err.println("Usage: java main.Main <xml-data> <input-query> <result-output>");
+            System.err.println("   or: java main.Main <xml-data> <input-query> <rewrite-output> <result-output>");
+            System.exit(1);
+        }
 
         String xmlFilePath = args[0];
+        String queryFilePath = args[1];
+        String rewriteOutPath;
+        String resultOutPath;
+        if (args.length == 3) {
+            resultOutPath = args[2];
+            rewriteOutPath = null;
+        } else {
+            rewriteOutPath = args[2];
+            resultOutPath = args[3];
+        }
 
-        // Step 1: Parse the query.
-        CharStream input = CharStreams.fromFileName(args[1]);
-        XPathLexer lexer = new XPathLexer(input);
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        XPathParser parser = new XPathParser(tokens);
+        // Step 1: try to parse the input as a plain FLWR query (the rewriter's
+        // input grammar). Track syntax errors so we can tell whether the input
+        // really is a plain FLWR query that should be rewritten into join form.
+        CharStream queryInput = CharStreams.fromFileName(queryFilePath);
+        XPathParser queryParser =
+                new XPathParser(new CommonTokenStream(new XPathLexer(queryInput)));
+        final int[] flwrErrors = {0};
+        queryParser.removeErrorListeners();
+        queryParser.addErrorListener(new BaseErrorListener() {
+            @Override public void syntaxError(Recognizer<?, ?> r, Object sym, int line,
+                    int pos, String msg, RecognitionException e) {
+                flwrErrors[0]++;
+            }
+        });
+        ParseTree inputTree = queryParser.xquery();
 
-        // Step 2: Evaluate
-        ParseTree tree = parser.xq();
+        String rewritten = null;
+        if (flwrErrors[0] == 0) {
+            // Cleanly a plain FLWR query: rewrite it into explicit join form.
+            rewritten = QueryRewriter.rewrite(inputTree);
+        }
+
+        // Step 2: obtain the tree to evaluate.
+        ParseTree rewrittenTree;
+        String rewriteFileContents;
+        if (rewritten != null) {
+            // FLWR input was rewritten: evaluate the rewritten join query.
+            rewriteFileContents = rewritten;
+            CharStream evalInput = CharStreams.fromString(rewritten);
+            rewrittenTree =
+                    new XPathParser(new CommonTokenStream(new XPathLexer(evalInput))).xq();
+        } else {
+            // Input needs no rewriting (e.g. <result>{...}, nested FLWR
+            //Evaluate it directly with the general xq
+            // grammar, and treat the rewrite as the query itself.
+            rewriteFileContents = new String(
+                    java.nio.file.Files.readAllBytes(new File(queryFilePath).toPath()));
+            CharStream evalInput = CharStreams.fromFileName(queryFilePath);
+            rewrittenTree =
+                    new XPathParser(new CommonTokenStream(new XPathLexer(evalInput))).xq();
+        }
+
+        if (rewriteOutPath != null) {
+            File rewriteFile = new File(rewriteOutPath);
+            if (rewriteFile.getParentFile() != null) {
+                rewriteFile.getParentFile().mkdirs();
+            }
+            try (PrintWriter pw = new PrintWriter(new FileWriter(rewriteFile))) {
+                pw.print(rewriteFileContents);
+            }
+        }
 
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         DocumentBuilder builder = factory.newDocumentBuilder();
-
-        List<Node> results;
-
-        if (tree.getChildCount() == 1 && tree.getChild(0) instanceof XPathParser.ApContext) {
-            // Milestone 1: pure XPath absolute path
-            results = XPathEvaluator.evaluateAP(tree.getChild(0), xmlFilePath);
-        } else {
-            // Milestone 2: XQuery expression
-            Document scratchDoc = builder.newDocument();
-            XQueryContext ctx = new XQueryContext();
-            ctx.contextItem = null;
-            ctx.env = new HashMap<>();
-            results = XQueryEvaluator.evaluate(tree, ctx, scratchDoc, xmlFilePath);
-        }
-
-        // Step 3: Build output document directly from results (no extra wrapper).
-        // The query's outermost element construction IS the root.
         Document outDoc = builder.newDocument();
+        XQueryContext ctx = new XQueryContext();
+        ctx.env = new HashMap<>();
+
+        List<Node> results = XQueryEvaluator.evaluate(rewrittenTree, ctx, outDoc, xmlFilePath);
 
         if (results.size() == 1 && results.get(0).getNodeType() == Node.ELEMENT_NODE) {
-            // Single element result — use it directly as document root
             outDoc.appendChild(outDoc.importNode(results.get(0), true));
         } else {
-            // Multiple results or non-element results — wrap in <result>
             Element root = outDoc.createElement("result");
             outDoc.appendChild(root);
             for (Node n : results) {
@@ -60,16 +100,15 @@ public class Main {
             }
         }
 
-        // Step 4: Write output XML
         TransformerFactory tf = TransformerFactory.newInstance();
         Transformer transformer = tf.newTransformer();
         transformer.setOutputProperty(OutputKeys.INDENT, "yes");
         transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no");
 
-        File outputFile = new File(args[2]);
-        if (outputFile.getParentFile() != null) {
-            outputFile.getParentFile().mkdirs();
+        File resultFile = new File(resultOutPath);
+        if (resultFile.getParentFile() != null) {
+            resultFile.getParentFile().mkdirs();
         }
-        transformer.transform(new DOMSource(outDoc), new StreamResult(outputFile));
+        transformer.transform(new DOMSource(outDoc), new StreamResult(resultFile));
     }
 }

@@ -57,6 +57,7 @@ rp
     | '*'
     | '.'
     | '..'
+    | 'text()'
     | 'text' '(' ')'
     | '@' ATTRNAME
     | '(' rp ')'
@@ -79,7 +80,7 @@ f
     | 'not' f
     ;
 
-TAGNAME  : [a-zA-Z_] [A-Za-z0-9_]* ;
+TAGNAME  : [a-zA-Z_] [A-Za-z0-9_-]* ;
 ATTRNAME : [a-zA-Z_] [A-Za-z0-9_]* ;
 xq
     : VAR
@@ -89,30 +90,32 @@ xq
     | xq ',' xq
     | xq '/' rp
     | xq '//' rp
-    | LT TAGNAME GT LBRACE xq RBRACE LT SLASH TAGNAME GT
+    | '<' TAGNAME '>' '{' xq '}' '</' TAGNAME '>'
+    | '<' TAGNAME '>' STRING '</' TAGNAME '>'
     | forClause letClause? whereClause? returnClause
     | letClause xq
+    | joinExpr
     ;
-content
-    : xq?
+joinExpr
+    : 'join' '(' xq ',' xq ',' '[' joinAttrs ']' ',' '[' joinAttrs ']' ')'
     ;
-COMMA : ',';
-LT    : '<';
-GT    : '>';
-SLASH : '/';
-LBRACE : '{';
-RBRACE : '}';
+
+joinAttrs
+    : (TAGNAME ( ',' TAGNAME )*)?
+    ;
 forClause
     : 'for' varRepeat1 ( ',' varRepeat1 )*
     ;
 varRepeat1
     :  VAR 'in' xq
+    | VAR 'in' path
     ;
 letClause
     :  'let' varRepeat2 (',' varRepeat2)*
     ;
 varRepeat2
     : VAR ':=' xq
+    | VAR '=' xq
     ;
 
 whereClause
@@ -134,4 +137,38 @@ cond
     | 'not' cond
     ;
 VAR : '$' [a-zA-Z_][a-zA-Z0-9_]* 
+    ;
+
+xquery
+    : 'for' varRepeat3 ( ',' varRepeat3 )* 'where' cond2 'return' returnexpr 
+    ;
+varRepeat3
+    :  VAR 'in' path
+    ;
+path
+    : 'doc' '(' fileName ')' ( sepRepeat )* ( '//' | '/' ) TAGNAME
+    |  VAR ( sepRepeat )* ( '//' | '/' ) TAGNAME
+    | 'doc' '(' fileName ')' ( sepRepeat )* ( '//' | '/' ) 'text()'
+    | VAR ( sepRepeat )* ( '//' | '/' ) 'text()'
+    ;
+sepRepeat
+    : ( '//' | '/' ) TAGNAME
+    ;
+returnexpr 
+    : VAR
+    | returnexpr ',' returnexpr
+    | '<' TAGNAME '>' '{' returnexpr '}' '</' TAGNAME '>'
+    | '<' TAGNAME '>' STRING '</' TAGNAME '>'
+    | path
+    ;
+cond2
+    : VAR 'eq' VAR
+    | VAR 'eq' STRING
+    | STRING 'eq' VAR
+    | STRING 'eq' STRING
+    | VAR '=' VAR
+    | VAR '=' STRING
+    | STRING '=' VAR
+    | STRING '=' STRING
+    | cond2 'and' cond2
     ;

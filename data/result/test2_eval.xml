@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<result>
+    <book-with-prices>
+        <title>Database Systems</title>
+        <price-review>
+            <price>45</price>
+        </price-review>
+        <price>
+            <price>50</price>
+        </price>
+    </book-with-prices>
+    <book-with-prices>
+        <title>Query Languages</title>
+        <price-review>
+            <price>28</price>
+        </price-review>
+        <price>
+            <price>30</price>
+        </price>
+    </book-with-prices>
+</result>
